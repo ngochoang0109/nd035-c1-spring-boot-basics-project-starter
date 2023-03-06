@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:th="https://www.thymeleaf.org">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+        <link rel="stylesheet" type="text/css" media="all" th:href="@{/css/bootstrap.min.css}">
+
+        <title>Home</title>
+    </head>
+    <body class="p-3 mb-2 bg-light text-black">
+        <div class="container">
+            <div id="logoutDiv">
+                <form th:action="@{/logout}" method="POST">
+                    <button type="submit" class="btn btn-secondary float-right" id="logout">Logout</button>
+                </form>
+            </div>
+            <div id="contentDiv" style="clear: right;">
+                <nav style="clear: right;">
+                    <div class="nav nav-tabs" id="nav-tab" role="tablist">
+                        <a class="nav-item nav-link active" id="nav-files-tab" data-toggle="tab" href="#nav-files" role="tab" aria-controls="nav-files" aria-selected="true">Files</a>
+                        <a class="nav-item nav-link" id="nav-notes-tab" data-toggle="tab" href="#nav-notes" role="tab" aria-controls="nav-notes" aria-selected="false">Notes</a>
+                        <a class="nav-item nav-link" id="nav-credentials-tab" data-toggle="tab" href="#nav-credentials" role="tab" aria-controls="nav-credentials" aria-selected="false">Credentials</a>
+                    </div>
+                </nav>
+                <div class="tab-content" id="nav-tabContent">
+                    <div aria-labelledby="nav-files-tab" class="tab-pane fade show active" id="nav-files"
+                         role="tabpanel">
+                        <form enctype="multipart/form-data" th:action="@{/home/upload-file}"
+                              th:method="POST" th:object="${fileRequest}">
+                            <div class="container">
+                                <div class="row" style="margin: 1em;">
+                                    <div class="col-sm-2">
+                                        <label for="fileUpload">Upload a New File:</label>
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <input class="form-control-file" id="fileUpload"
+                                               name="fileUpload" th:field="*{multipartFile}" type="file">
+                                    </div>
+                                    <div class="col-sm-4">
+                                        <button type="submit" class="btn btn-dark" id="uploadButton">Upload</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                        <div class="table-responsive">
+                            <table class="table table-striped" id="fileTable">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 20%" scope="col"></th>
+                                        <th style="width: 80%" scope="col">File Name</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                <th:block th:each="file : ${listFile}">
+                                    <tr>
+                                        <td>
+                                            <a class="btn btn-success"
+                                               th:href="@{'/home/download-file/'+${file.getFileId()}}"
+                                               th:id="${file.getFileId()}">View</a>
+                                            <a class="btn btn-danger"
+                                               th:href="@{'/home/delete-file/'+${file.getFileId()}}"
+                                               th:id="${file.getFileId()}">Delete</a>
+                                        </td>
+                                        <th scope="row" th:text="${file.getFilename()}"></th>
+                                    </tr>
+                                </th:block>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="tab-pane fade" id="nav-notes" role="tabpanel" aria-labelledby="nav-notes-tab">
+                        <button style="margin: 0.25em;" id="addNewNoteBtnModal" type="button" class="btn btn-info float-right"
+                                onclick="showNoteModal()">
+                            + Add a New Note
+                        </button>
+
+                        <div class="table-responsive">
+                            <table class="table table-striped" id="userTable">
+                                <thead>
+                                <tr>
+                                    <th scope="col" style="width: 20%"></th>
+                                    <th scope="col" style="width: 20%">Title</th>
+                                    <th scope="col" style="width: 60%">Description</th>
+                                </tr>
+                                </thead>
+                                <tbody id="note-body-table">
+
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="modal fade" id="noteModal" tabindex="-1" role="dialog" aria-labelledby="noteModalLabel" aria-hidden="true">
+                            <div class="modal-dialog" role="document">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="noteModalLabel">Note</h5>
+                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                            <span aria-hidden="true">&times;</span>
+                                        </button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <div>
+                                            <input type="hidden" name="noteId" id="note-id">
+                                            <div class="form-group">
+                                                <label for="note-title" class="col-form-label">Title</label>
+                                                <input class="form-control" id="note-title" maxlength="20"
+                                                       name="noteTitle" required type="text">
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="note-description" class="col-form-label">Description</label>
+                                                <textarea class="form-control" id="note-description"
+                                                          maxlength="1000" name="noteDescription" required
+                                                          rows="5"></textarea>
+                                            </div>
+                                            <button id="noteSubmit" type="submit" class="d-none"></button>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                                        <button class="btn btn-primary" id="saveNote" type="button">Save changes
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="tab-pane fade" id="nav-credentials" role="tabpanel" aria-labelledby="nav-credentials-tab">
+                        <button style="margin: 0.25em;" type="button" class="btn btn-info float-right"
+                                onclick="showCredentialModal()"
+                                id="addNewCredentialButton">
+                            + Add a New Credential
+                        </button>
+
+                        <div class="table-responsive">
+                            <table class="table table-striped" th:object="${credentials}" id="credentialTable">
+                                <thead>
+                                <tr>
+                                    <th scope="col" style="width: 20%"></th>
+                                    <th scope="col" style="width: 35%">URL</th>
+                                    <th scope="col" style="width: 20%">Username</th>
+                                    <th scope="col" style="width: 25%">Password</th>
+                                </tr>
+                                </thead>
+                                <tbody id="credential-body-table">
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="modal fade" id="credentialModal" tabindex="-1" role="dialog" aria-labelledby="credentialModalLabel" aria-hidden="true">
+                            <div class="modal-dialog" role="document">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="credentialModalLabel">Credential</h5>
+                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                            <span aria-hidden="true">&times;</span>
+                                        </button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <form action="#" method="POST">
+                                            <input type="hidden" name="credentialId" id="credential-id">
+                                            <div class="form-group">
+                                                <label for="credential-url" class="col-form-label">URL</label>
+                                                <input type="text" name= "url" class="form-control" id="credential-url" maxlength="100" required>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="credential-username" class="col-form-label">Username</label>
+                                                <input type="text" name= "username" class="form-control" id="credential-username" maxlength="30" required>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="credential-password" class="col-form-label">Password</label>
+                                                <input type="text" name= "password" class="form-control" id="credential-password" maxlength="30" required>
+                                            </div>
+                                            <button id="credentialSubmit" type="submit" class="d-none"></button>
+                                        </form>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                                        <button class="btn btn-primary" id="saveCredential" type="button">Save changes
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+        <script th:src="@{/js/popper.min.js}"></script>
+        <script th:src="@{/js/bootstrap.min.js}"></script>
+        <script>
+            $(document).ready(function () {
+                $.ajax({
+                        type:'GET',
+                        contentType:"application/json",
+                        url:"/home/api/view-note",
+                        success: function (data){
+                           $('.modal-content .close').click()
+                           data.forEach(function(item, index){
+                               $('#note-body-table').append('<tr>' +
+                                        '<td id=' + item.noteid + '>'
+                                            +'<button id='+item.noteid+' type="button" '
+                                            +'class="btn btn-success" '
+                                            +'onclick="showNoteModal(' +item.noteid+ ',\'EDIT\'' + ')" >Edit</button>'
+                                            +'<button type="button" id="' + item.noteid + '" class="btn btn-danger" '
+                                            + 'onclick="deleteNote('+item.noteid+')">Delete</button>'
+                                        +'</td>'
+                                        +'<th scope="row">' + item.notetitle + '</th>'
+                                        +'<td>' + item.notedescription + '</td>'
+                                    +'</tr>');
+                           })
+                        },
+                        error: function (e) {
+                           $('.modal-content .close').click()
+                        }
+                })
+
+                $.ajax({
+                        type:'GET',
+                        contentType:"application/json",
+                        url:"/home/api/view-credential",
+                        success: function (data){
+                           console.log(data)
+                           $('.modal-content .close').click()
+                           data.forEach(function(item, index){
+                               $('#credential-body-table').append('<tr>' +
+                                        '<td id=' + item.credentialid + '>'
+                                            +'<button id='+item.credentialid+' type="button" '
+                                            +'class="btn btn-success" '
+                                            +'onclick="showCredentialModal(' +item.credentialid+ ',\'EDIT\'' + ')" >Edit</button>'
+                                            +'<button type="button" id="' + item.credentialid + '" class="btn btn-danger" '
+                                            + 'onclick="deleteCredential('+item.credentialid+')">Delete</button>'
+                                        +'</td>'
+                                        +'<th scope="row">' + item.url + '</th>'
+                                        +'<td>' + item.username + '</td>'
+                                        +'<td>' + item.password + '</td>'
+                                    +'</tr>');
+                           })
+                        },
+                        error: function (e) {
+                           $('.modal-content .close').click()
+                        }
+                })
+
+                $('#saveCredential').click(function(){
+                    let credentialid = $('#credential-id').val()
+                    let url = $('#credential-url').val()
+                    let username = $('#credential-username').val()
+                    let password = $('#credential-password').val()
+                    let requestObject = {
+                        credentialid : credentialid,
+                        url : url,
+                        username : username,
+                        password, password
+                    }
+                    if(!credentialid){
+                        $.ajax({
+                            type:'POST',
+                            contentType:"application/json",
+                            url:"/home/api/add-credential",
+                            data: JSON.stringify(requestObject),
+                            dataType: 'json',
+                            success: function (data){
+                                $('.modal-content .close').click()
+                                $('#credential-body-table').empty()
+                                data.forEach(function(item, index){
+                                    $('#credential-body-table').append('<tr>' +
+                                        '<td id=' + item.credentialid + '>'
+                                            +'<button id='+item.credentialid+' type="button" '
+                                            +'class="btn btn-success" '
+                                            +'onclick="showCredentialModal(' +item.credentialid+ ',\'EDIT\'' + ')" >Edit</button>'
+                                            +'<button type="button" id="' + item.credentialid + '" class="btn btn-danger" '
+                                            + 'onclick="deleteCredential('+item.credentialid+')">Delete</button>'
+                                        +'</td>'
+                                        +'<th scope="row">' + item.url + '</th>'
+                                        +'<td>' + item.username + '</td>'
+                                        +'<td>' + item.password + '</td>'
+                                    +'</tr>');
+                                })
+                            },
+                            error: function (e) {
+                                $('.modal-content .close').click()
+                            }
+                        })
+                    } else {
+                        $.ajax({
+                            type:'POST',
+                            contentType:"application/json",
+                            url:"/home/api/edit-credential",
+                            data: JSON.stringify(requestObject),
+                            dataType: 'json',
+                            success: function (data){
+                                $('.modal-content .close').click()
+                                $('#credential-body-table').empty()
+                                data.forEach(function(item, index){
+                                    $('#credential-body-table').append('<tr>' +
+                                        '<td id=' + item.credentialid + '>'
+                                            +'<button id='+item.credentialid+' type="button" '
+                                            +'class="btn btn-success" '
+                                            +'onclick="showCredentialModal(' +item.credentialid+ ',\'EDIT\'' + ')" >Edit</button>'
+                                            +'<button type="button" id="' + item.credentialid + '" class="btn btn-danger" '
+                                            + 'onclick="deleteCredential('+item.credentialid+')">Delete</button>'
+                                        +'</td>'
+                                        +'<th scope="row">' + item.url + '</th>'
+                                        +'<td>' + item.username + '</td>'
+                                        +'<td>' + item.password + '</td>'
+                                    +'</tr>');
+                                })
+                            },
+                            error: function (e) {
+                            $('.modal-content .close').click()
+                            }
+                        })
+                    }
+                })
+
+
+                $('#saveNote').click(function(){
+                    let noteid = $('#note-id').val()
+                    let title = $('#note-title').val()
+                    let description = $('#note-description').val()
+                    let requestObject = {
+                        noteid : noteid,
+                        title : title,
+                        description : description
+                    }
+                    if(!noteid){
+                        $.ajax({
+                            type:'POST',
+                            contentType:"application/json",
+                            url:"/home/api/add-note",
+                            data: JSON.stringify(requestObject),
+                            dataType: 'json',
+                            success: function (data){
+                                $('.modal-content .close').click()
+                                $('#note-body-table').empty()
+                                data.forEach(function(item, index){
+                                    $('#note-body-table').append('<tr>' +
+                                        '<td id=' + item.noteid + '>'
+                                           +'<button id='+item.noteid+' type="button" '
+                                            +'class="btn btn-success" '
+                                            +'onclick="showNoteModal(' +item.noteid+ ',\'EDIT\'' + ')" >Edit</button>'
+                                            +'<button type="button" id="' + item.noteid + '" class="btn btn-danger" '
+                                            + 'onclick="deleteNote('+item.noteid+')">Delete</button>'
+                                        +'</td>'
+                                        +'<th scope="row">' + item.notetitle + '</th>'
+                                        +'<td>' + item.notedescription + '</td>'
+                                    +'</tr>');
+                                })
+                            },
+                            error: function (e) {
+                                $('.modal-content .close').click()
+                            }
+                        })
+                    } else {
+                        $.ajax({
+                            type:'POST',
+                            contentType:"application/json",
+                            url:"/home/api/edit-note",
+                            data: JSON.stringify(requestObject),
+                            dataType: 'json',
+                            success: function (data){
+                                $('.modal-content .close').click()
+                                $('#note-body-table').empty()
+                                data.forEach(function(item, index){
+                                $('#note-body-table').append('<tr>' +
+                                        '<td id=' + item.noteid + '>'
+                                            +'<button id='+item.noteid+' type="button" '
+                                            +'class="btn btn-success" '
+                                            +'onclick="showNoteModal(' +item.noteid+ ',\'EDIT\'' + ')" >Edit</button>'
+                                            +'<button type="button" id="' + item.noteid + '" class="btn btn-danger" '
+                                            + 'onclick="deleteNote('+item.noteid+')">Delete</button>'
+                                        +'</td>'
+                                        +'<th scope="row">' + item.notetitle + '</th>'
+                                        +'<td>' + item.notedescription + '</td>'
+                                    +'</tr>');
+                                })
+                            },
+                            error: function (e) {
+                            $('.modal-content .close').click()
+                            }
+                        })
+                    }
+                })
+             });
+
+        </script>
+        <!--For opening the note modal-->
+        <script type="text/javascript">
+            function deleteNote(noteid){
+                    $.ajax({
+                        type:'GET',
+                        contentType:"application/json",
+                        url:"/home/api/delete-note/"+noteid,
+                        success: function (data){
+                           $('#note-body-table').empty()
+                           data.forEach(function(item, index){
+                               $('#note-body-table').append('<tr>' +
+                                        '<td id=' + item.noteid + '>'
+                                            +'<button id='+item.noteid+' type="button" '
+                                            +'class="btn btn-success" '
+                                            +'onclick="showNoteModal(' +item.noteid+ ',\'EDIT\'' + ')" >Edit</button>'
+                                            +'<button type="button" id="' + item.noteid + '" class="btn btn-danger" '
+                                            + 'onclick="deleteNote('+item.noteid+')">Delete</button>'
+                                        +'</td>'
+                                        +'<th scope="row">' + item.notetitle + '</th>'
+                                        +'<td>' + item.notedescription + '</td>'
+                                    +'</tr>');
+                           })
+                        },
+                        error: function (e) {
+                           $('.modal-content .close').click()
+                        }
+                     })
+                }
+             function deleteCredential(credentialId){
+                    $.ajax({
+                        type:'GET',
+                        contentType:"application/json",
+                        url:"/home/api/delete-credential/"+credentialId,
+                        success: function (data){
+                           $('#credential-body-table').empty()
+                           data.forEach(function(item, index){
+                               $('#credential-body-table').append('<tr>' +
+                                        '<td id=' + item.credentialid + '>'
+                                            +'<button id='+item.credentialid+' type="button" '
+                                            +'class="btn btn-success" '
+                                            +'onclick="showCredentialModal(' +item.credentialid+ ',\'EDIT\'' + ')" >Edit</button>'
+                                            +'<button type="button" id="' + item.credentialid + '" class="btn btn-danger" '
+                                            + 'onclick="deleteCredential('+item.credentialid+')">Delete</button>'
+                                        +'</td>'
+                                        +'<th scope="row">' + item.url + '</th>'
+                                        +'<td>' + item.username + '</td>'
+                                        +'<td>' + item.password + '</td>'
+                                    +'</tr>');
+                           })
+                        },
+                        error: function (e) {
+                           $('.modal-content .close').click()
+                        }
+                     })
+                }
+
+            // For opening the note modal
+            function showNoteModal(id, mode) {
+                let noteId, noteTitle, noteDescription
+                <!-- Show data for edit modal               -->
+                if(mode === 'EDIT'){
+                    let url = "/home/api/get-note/" + id
+                    $.ajax({
+                        type:'GET',
+                        contentType:"application/json",
+                        url:url,
+                        success: function (data){
+                            $('#note-id').val(data.noteid ? data.noteid : '');
+                            $('#note-title').val(data.notetitle ? data.notetitle : '');
+                            $('#note-description').val(data.notedescription ? data.notedescription : '');
+                            $('#noteModal').modal('show');
+                            return;
+                        }
+                    })
+                }
+                $('#note-id').val(noteId ? noteId : '');
+                $('#note-title').val(noteTitle ? noteTitle : '');
+                $('#note-description').val(noteDescription ? noteDescription : '');
+                $('#noteModal').modal('show');
+            }
+
+            // For opening the credentials modal
+            function showCredentialModal(id, mode) {
+                let credentialId, url, username, password
+                <!-- Show data for edit modal               -->
+                if(mode === 'EDIT'){
+                    let url = "/home/api/get-credential/" + id
+                    $.ajax({
+                        type:'GET',
+                        contentType:"application/json",
+                        url:url,
+                        success: function (data){
+                             console.log(data)
+                             $('#credential-id').val(data.credentialid ? data.credentialid : '');
+                             $('#credential-url').val(data.url ? data.url : '');
+                             $('#credential-username').val(data.username ? data.username : '');
+                             $('#credential-password').val(data.password ? data.password : '');
+                             $('#credentialModal').modal('show');
+                            return;
+                        }
+                    })
+                }
+                $('#credential-id').val(credentialId ? credentialId : '');
+                $('#credential-url').val(url ? url : '');
+                $('#credential-username').val(username ? username : '');
+                $('#credential-password').val(password ? password : '');
+                $('#credentialModal').modal('show');
+            }
+        </script>
+    </body>
+</html>
